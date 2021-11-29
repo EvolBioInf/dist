@@ -1,0 +1,422 @@
+#+begin_src latex
+  \section{Introduction}
+  Distance matrices crop up in many contexts in biology, for example,
+  phylogeny reconstruction. In phylogeny reconstruction, the most widely
+  used format for distance matrices is the
+  PHYLIP\footnote{\texttt{https://evolution.genetics.washington.edu/phylip.html}}
+  format, which consists of the number of taxa, $n$, followed by $n$
+  rows of data, each preceded by the taxon name, Table~\ref{tab:dm}
+  shows an example with columns separated by white space, that is,
+  blanks or tabs. Notice that the matrix is symmetrical, except for one
+  pair of entries, the top right cell is 0.186, the bottom let hand cell
+  0.184.
+  \begin{table}
+    \caption{Distance matrix in PHYLIP format.}\label{tab:dm}
+    \begin{center}
+      \input{dm}
+    \end{center}
+  \end{table}
+
+  There
+  may be several distance matrices in a data stream, and we ignore rows
+  that don't contain numbers between them. However, there can be no
+  extra lines between the number of taxa and the actual data. So we can summarize:
+
+  !Package \texttt{dist} implements data structures and functions for
+  !reading, writing, and manipulating distance matrices in PHYLIP format.
+#+end_src
+#+begin_src go <<dist.go>>=
+  package dist
+  import (
+	  //<<Imports>>
+  )
+  //<<Data structures>>
+  //<<Methods>>
+  //<<Functions>>
+#+end_src
+#+begin_src latex
+  The package is centered on two data structures, \texttt{DistMat} for
+  storing a distance matrix, and \texttt{Scanner} for reading distance
+  matrices.
+
+  \section{Structure \texttt{DistMat}}
+  !A \texttt{DistMat} holds a square matrix of distances and a
+  !slice of taxon names.
+#+end_src
+#+begin_src go <<Data structures>>=
+  type DistMat struct {
+	  Matrix [][]float64
+	  Names []string
+  }
+#+end_src
+#+begin_src latex
+  \subsection{Function \texttt{NewDistMat}}
+  !Function NewSequence returns a new n x n \texttt{DistMat}.
+
+#+end_src
+#+begin_src go <<Functions>>=
+  func NewDistMat(n int) *DistMat {
+	  d := new(DistMat)
+	  d.Matrix = make([][]float64, n)
+	  for i := 0; i < n; i++ {
+		  d.Matrix[i] = make([]float64, n)
+	  }
+	  d.Names = make([]string, n)
+	  return d
+  }
+#+end_src
+#+begin_src latex
+  \subsection{Method \texttt{String}}
+  Writing a \texttt{DistMat} is delegated to its \texttt{String} method.
+  !\texttt{String} returns a distance matrix as a table.
+  We construct this table using a tab writer.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (d *DistMat) String() string {
+	  mat := ""
+	  //<<Construct tab writer>>
+	  //<<Write number of taxa>>
+	  //<<Write matrix>>
+	  return mat
+  }
+#+end_src
+#+begin_src latex
+  Our tab writer writes to a byte buffer. The columns of the table
+  written to the buffer are delimited with blanks.
+#+end_src
+#+begin_src go <<Construct tab writer>>=
+  var buf []byte
+  buffer := bytes.NewBuffer(buf)
+  w := new(tabwriter.Writer)
+  w.Init(buffer, 1, 0, 2, ' ', 0)
+#+end_src
+#+begin_src latex
+  We import \ty{bytes} and \ty{tabwriter}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "bytes"
+  "text/tabwriter"
+#+end_src
+#+begin_src latex
+  We write the number of taxa and flush the tab writer, as the number of
+  taxa is not part of the matrix table.
+#+end_src
+#+begin_src go <<Write number of taxa>>=
+  n := len(d.Matrix)
+  fmt.Fprintf(w, "%d\n", n)
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We iterate over the matrix and write its rows. At the end, we convert
+  the buffer contents to string.
+#+end_src
+#+begin_src go <<Write matrix>>=
+  for i := 0; i < n; i++ {
+	  fmt.Fprintf(w, "%s", d.Names[i])
+	  for j := 0; j < n; j++ {
+		  fmt.Fprintf(w, "\t%.3g", d.Matrix[i][j])
+	  }
+	  fmt.Fprint(w, "\n")
+  }
+  w.Flush()
+  mat = buffer.String()
+#+end_src
+#+begin_src latex
+  \subsection{Method \texttt{MakeSymmetrical}}
+  !The method \texttt{MakeSymmetrical} forms the arithmetic average between
+  !corresponding entries in a \texttt{DistMat}.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (d *DistMat) MakeSymmetrical() {
+	  n := len(d.Matrix)
+	  for i := 0; i < n-1; i++ {
+		  for j := i+1; j < n; j++ {
+			  m1 := d.Matrix[i][j]
+			  m2 := d.Matrix[j][i]
+			  a := (m1 + m2) / 2.0
+			  d.Matrix[i][j] = a
+			  d.Matrix[j][i] = a
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  \subsection{Method \texttt{Delete}}
+  !The method \texttt{Delete} removes one taxon from
+  !\texttt{DistMat}.
+  We remove the taxon from the names list and from the distance matrix.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (d *DistMat) Delete(taxon int) {
+	  //<<Delete taxon from names>>
+	  //<<Delete taxon from distances>>
+  }
+#+end_src
+#+begin_src latex
+  We delete the taxon from the list of names by reslicing.
+#+end_src
+#+begin_src go <<Delete taxon from names>>=
+  n := len(d.Names)
+  j := 0
+  for i, n := range d.Names {
+	  if i != taxon {
+		  d.Names[j] = n
+		  j++
+	  }
+  }
+  d.Names = d.Names[:j]
+#+end_src
+#+begin_src latex
+  For each row of distances, we check whether it's to be included and,
+  if so, add it as row \ty{ii}. Afterwards, we adjust the matrix
+  dimensions.
+#+end_src
+#+begin_src go <<Delete taxon from distances>>=
+  ii := 0
+  for i := 0; i < n; i++ {
+	  if i == taxon { continue }
+	  //<<Add row>>
+	  ii++
+  }
+  //<<Adjust matrix dimensions>>
+#+end_src
+#+begin_src latex
+  In the row we add, we skip the deleted column.
+#+end_src
+#+begin_src go <<Add row>>=
+  jj := 0
+  for j := 0; j < n; j++ {
+	  if j == taxon { continue }
+	  d.Matrix[ii][jj] = d.Matrix[i][j]
+	  jj++
+  }
+#+end_src
+#+begin_src latex
+  We use reslicing to remove the last row and column.
+#+end_src
+#+begin_src go <<Adjust matrix dimensions>>=
+  n--
+  for i := 0; i < n; i++ {
+	  d.Matrix[i] = d.Matrix[i][:n]
+  }
+  d.Matrix = d.Matrix[:n]
+#+end_src
+#+begin_src latex
+  \subsection{Method \texttt{Append}}
+  !Method \texttt{Append} appends a taxon consisting of a name and a
+  !slice of distances to the \texttt{DistMat}.
+  We first check that the incoming data and the existing matrix have the
+  same dimensions. Then we append the name, followed by a row and a
+  column of distances.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (d *DistMat) Append(name string, data []float64) {
+	  //<<Check dimensions>>
+	  d.Names = append(d.Names, name)
+	  //<<Append distance row>>
+	  //<<Append distance column>>
+  }
+#+end_src
+#+begin_src latex
+  If the data supplied doesn't have the same dimension as the matrix,
+  something has gone wrong and we bail with a friendly message.
+#+end_src
+#+begin_src go <<Check dimensions>>=
+  n := len(d.Matrix)
+  if n != len(data) {
+	  i := "matrix length (%d) != data length (%d)"
+	  log.Fatalf(i, n, len(data))
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{log}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "log"
+#+end_src
+#+begin_src latex
+  We extend the data by the last zero on the main diagonal and append it
+  as the last row.
+#+end_src
+#+begin_src go <<Append distance row>>=
+  data = append(data, 0.0)
+  d.Matrix = append(d.Matrix, data)
+#+end_src
+#+begin_src latex
+  We go through the rows and append the last column to each.
+#+end_src
+#+begin_src go <<Append distance column>>=
+  for i := 0; i < n; i++ {
+	  d.Matrix[i] = append(d.Matrix[i], data[i])
+  }
+#+end_src
+#+begin_src latex
+  \subsection{Method \texttt{Min}}
+  !Method \texttt{Min} returns the minimum entry of the distance matrix
+  !and its indexes.
+  Each off-diagonal entry is analyzed.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (d *DistMat) Min() (min float64, minI, minJ int) {
+	  min = math.MaxFloat64
+	  n := len(d.Names)
+	  for i := 0; i < n; i++ {
+		  for j := 0; j < n; j++ {
+			  if i != j {
+				  //<<Analyze entry>>
+			  }
+		  }
+	  }
+	  return min, minI, minJ
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{math}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "math"
+#+end_src
+#+begin_src latex
+  An entry is compared to the current minimum.
+#+end_src
+#+begin_src go <<Analyze entry>>=
+  if d.Matrix[i][j] < min {
+	  min = d.Matrix[i][j]
+	  minI = i
+	  minJ = j
+  }
+#+end_src
+#+begin_src latex
+  \section{Structure \texttt{Scanner}}
+  !A \texttt{DistMat} is read using a \texttt{Scanner}.
+  It is modeled on \texttt{bufio.Scanner}, but can handle lines of any
+  length, hence it wraps a buffered reader rather than a buffered scanner. We also
+  add a hook for additional fields.
+#+end_src
+#+begin_src go <<Data structures>>=
+  type Scanner struct {
+	  r *bufio.Reader
+	  //<<Scanner fields>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{bufio}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "bufio"
+#+end_src
+#+begin_src latex
+  \subsection{Function \ty{NewScanner}}
+  !The function \texttt{NewScanner} returns a new \ty{Scanner}.
+#+end_src
+#+begin_src go <<Functions>>=
+  func NewScanner(r io.Reader) *Scanner {
+	  sc := new(Scanner)
+	  sc.r = bufio.NewReader(r)
+	  return sc
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "io"
+#+end_src
+#+begin_src latex
+  When parsing a distance matrix, we read three types of lines: Lines
+  without numbers between matrices, which we skip, a header line
+  containing a number, $n$, or one of the $n$ matrix lines.
+  \subsection{Method \texttt{Scan}}
+  !\texttt{Scan} reads input matrix by matrix.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (s *Scanner) Scan() bool {
+	  //<<Skip to header line>>
+	  //<<Read header>>
+	  //<<Read matrix>>
+	  return true
+  }
+#+end_src
+#+begin_src latex
+  Lines between matrices don't contain numbers.
+#+end_src
+#+begin_src go <<Skip to header line>>=
+  var err error
+  const num = "1234567890"
+  l, err := s.r.ReadString('\n')
+  for err == nil && strings.IndexAny(l, num) < 0 {
+	  l, err = s.r.ReadString('\n')
+  }
+  if err != nil { return false }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  We read the header and construct a new distance matrix.
+#+end_src
+#+begin_src go <<Read header>>=
+  l = strings.TrimRight(l, "\r\n")
+  n, err := strconv.Atoi(l)
+  if err != nil {
+	  log.Fatalf("can't convert %q", l)
+  }
+  s.mat = NewDistMat(n)
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}.
+#+end_src
+#+begin_src go <<Imports>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  We declare the scanner field \ty{mat}.
+#+end_src
+#+begin_src go <<Scanner fields>>=
+  mat *DistMat
+#+end_src
+#+begin_src latex
+  We read the $n$ rows of the distance matrix and store each one.
+#+end_src
+#+begin_src go <<Read matrix>>=
+  for i := 0; i < n; i++ {
+	  l, err = s.r.ReadString('\n')
+	  if err != nil { return false }
+	  fields := strings.Fields(l)
+	  //<<Store row>>
+  }
+#+end_src
+#+begin_src latex
+  The first field in a row is the name, the other fields are the
+  distances. Parsing them might lead to an error, which we catch.
+#+end_src
+#+begin_src go <<Store row>>=
+  s.mat.Names[i] = fields[0]
+  for j := 1; j <= n; j++ {
+	  s.mat.Matrix[i][j-1], err =
+		  strconv.ParseFloat(fields[j], 64)
+	  if err != nil {
+		  log.Fatalf("can't read %q", fields[j])
+	  }
+  }
+
+#+end_src
+#+begin_src latex
+  \subsection{Method \texttt{DistanceMatrix}}
+  !The method \texttt{DistanceMatrix} returns the last \ty{DistMat}
+  !scanned.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (s *Scanner) DistanceMatrix() *DistMat {
+	  return s.mat
+  }
+#+end_src

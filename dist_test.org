@@ -1,0 +1,125 @@
+#+begin_src latex
+  \section{Testing}
+  The outline of our testing program has hooks for imports, functions,
+  and the testing logic.
+#+end_src
+#+begin_src go <<dist_test.go>>=
+  package dist
+
+  import (
+	  "testing"
+	  //<<Testing imports>>
+  )
+  //<<Testing functions>>
+  func TestDist(t *testing.T) {
+	  //<<Testing>>
+  }
+#+end_src
+#+begin_src latex
+  We test the functions and methods of \ty{dist}. So we read a matrix,
+  make it symmetrical delete a row and a column, append a row and a
+  column, and look up its minimum.
+#+end_src
+#+begin_src go <<Testing>>=
+  //<<Test reading a matrix>>
+  //<<Test making a matrix symmetrical>>
+  //<<Test deleting a row and a column>>
+  //<<Test appending a row and a column>>
+  //<<Test looking up minimum>>
+#+end_src
+#+begin_src latex
+  To test our code for reading a matrix, we open the matrix file, read
+  the matrix, and check what we've read.
+#+end_src
+#+begin_src go <<Test reading a matrix>>=
+  //<<Open matrix file>>
+  //<<Read distance matrix>>
+  //<<Check distance matrix>>
+#+end_src
+#+begin_src latex
+  We open the file \ty{dm.phy}, which contains the distance matrix shown
+  in Table~\ref{tab:dm} from file.
+#+end_src
+#+begin_src go <<Open matrix file>>=
+  fn := "data/dm.phy"
+  f, err := os.Open(fn)
+  if err != nil {
+	  t.Errorf("can't open %q", fn)
+  }
+  defer f.Close()
+#+end_src
+#+begin_src latex
+  We import \ty{os}.
+#+end_src
+#+begin_src go <<Testing imports>>=
+  "os"
+#+end_src
+#+begin_src latex
+  We read the matrix using our scanner.
+#+end_src
+#+begin_src go <<Read distance matrix>>=
+  sc := NewScanner(f)
+  sc.Scan()
+  dm := sc.DistanceMatrix()
+#+end_src
+#+begin_src latex
+  We check a matrix by comparing it to a precomputed one stored in a
+  file, \ty{r1.txt} in this case. Since we repeat this type of
+  comparison a few times, we delegate it to a function call.
+#+end_src
+#+begin_src go <<Check distance matrix>>=
+  checkMat(dm, "data/r1.txt", t)
+#+end_src
+#+begin_src latex
+  We compare the matrix we get with the one we want.
+#+end_src
+#+begin_src go <<Testing functions>>=
+  func checkMat(d *DistMat, file string, t *testing.T) {
+	  res, err := ioutil.ReadFile(file)
+	  if err != nil {
+		  t.Errorf("can't open %q", file)
+	  }
+	  want := string(res)
+	  get := d.String()
+	  if get != want {
+		  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil}.
+#+end_src
+#+begin_src go <<Testing imports>>=
+  "io/ioutil"
+#+end_src
+#+begin_src latex
+  We make the matrix symmetrical, if it exists.
+#+end_src
+#+begin_src go <<Test making a matrix symmetrical>>=
+  dm.MakeSymmetrical()
+  checkMat(dm, "data/r2.txt", t)
+#+end_src
+#+begin_src latex
+  We delete the first row and second column.
+#+end_src
+#+begin_src go <<Test deleting a row and a column>>=
+  dm.Delete(0)
+  checkMat(dm, "data/r3.txt", t)
+#+end_src
+#+begin_src latex
+  We append a row and a column.
+#+end_src
+#+begin_src go <<Test appending a row and a column>>=
+  data := []float64{0.1, 0.1, 0.1, 0.1}
+  dm.Append("new", data)
+  checkMat(dm, "data/r4.txt", t)
+#+end_src
+#+begin_src latex
+  We test looking up the minimum matrix entry.
+#+end_src
+#+begin_src go <<Test looking up minimum>>=
+  m, i, j := dm.Min()
+  if m != 0.0489 || i != 0 || j != 3 {
+	  t.Errorf("can't find minimum")
+  }
+#+end_src
