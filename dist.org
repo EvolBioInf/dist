@@ -208,6 +208,66 @@
   d.Matrix = d.Matrix[:n]
 #+end_src
 #+begin_src latex
+  \subsection{Method \texttt{DeletePair}}
+  In phylogeny reconstruction we often need to delete a pair of taxa in
+  one step.
+  !Method \texttt{DeletePair} deletes a pair of taxa.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (d *DistMat) DeletePair(t1, t2 int) {
+	  //<<Delete taxon pair from names>>
+	  //<<Delete taxon pair from matrix>>
+  }
+#+end_src
+#+begin_src latex
+  We delete the two names.
+#+end_src
+#+begin_src go <<Delete taxon pair from names>>=
+  j := 0
+  for i, n := range d.Names {
+	  if i != t1 && i != t2 {
+		  d.Names[j] = n
+		  j++
+	  }
+  }
+  d.Names = d.Names[:j]
+#+end_src
+#+begin_src latex
+  We delete the two taxa from the distance matrix by first deleting
+  their rows, then their columns.
+#+end_src
+#+begin_src go <<Delete taxon pair from matrix>>=
+  //<<Delete rows>>
+  //<<Delete columns>>
+#+end_src
+#+begin_src latex
+  We keep the rows that don't correspond to the deleted taxa.
+#+end_src
+#+begin_src go <<Delete rows>>=
+  r := 0
+  for i, row := range d.Matrix {
+	  if i == t1 || i == t2 { continue }
+	  d.Matrix[r] = row
+	  r++
+  }
+  d.Matrix = d.Matrix[:r]
+#+end_src
+#+begin_src latex
+  Similarly, we keep the columns that don't correspond to the deleted
+  taxa.
+#+end_src
+#+begin_src go <<Delete columns>>=
+  for i, row := range d.Matrix {
+	  c := 0
+	  for j, col := range row {
+		  if j == t1 || j == t2 { continue }
+		  row[c] = col
+		  c++
+	  }
+	  d.Matrix[i] = row[:c]
+  }
+#+end_src
+#+begin_src latex
   \subsection{Method \texttt{Append}}
   !Method \texttt{Append} appends a taxon consisting of a name and a
   !slice of distances to the \texttt{DistMat}.

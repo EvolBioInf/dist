@@ -94,6 +94,38 @@ func (d *DistMat) Delete(taxon int) {
 	d.Matrix = d.Matrix[:n]
 }
 
+// Method DeletePair deletes a pair of taxa.
+func (d *DistMat) DeletePair(t1, t2 int) {
+	j := 0
+	for i, n := range d.Names {
+		if i != t1 && i != t2 {
+			d.Names[j] = n
+			j++
+		}
+	}
+	d.Names = d.Names[:j]
+	r := 0
+	for i, row := range d.Matrix {
+		if i == t1 || i == t2 {
+			continue
+		}
+		d.Matrix[r] = row
+		r++
+	}
+	d.Matrix = d.Matrix[:r]
+	for i, row := range d.Matrix {
+		c := 0
+		for j, col := range row {
+			if j == t1 || j == t2 {
+				continue
+			}
+			row[c] = col
+			c++
+		}
+		d.Matrix[i] = row[:c]
+	}
+}
+
 // Method Append appends a taxon consisting of a name and a slice of distances to the DistMat.
 func (d *DistMat) Append(name string, data []float64) {
 	n := len(d.Matrix)

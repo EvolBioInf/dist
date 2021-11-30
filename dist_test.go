@@ -39,4 +39,6 @@ func TestDist(t *testing.T) {
 	if m != 0.0489 || i != 0 || j != 3 {
 		t.Errorf("can't find minimum")
 	}
+	dm.DeletePair(0, 4)
+	checkMat(dm, "data/r5.txt", t)
 }

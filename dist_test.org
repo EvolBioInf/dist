@@ -17,15 +17,16 @@
 #+end_src
 #+begin_src latex
   We test the functions and methods of \ty{dist}. So we read a matrix,
-  make it symmetrical delete a row and a column, append a row and a
-  column, and look up its minimum.
+  make it symmetrical delete a taxon, append a taxon, look up its
+  minimum, and delete a pair of taxa.
 #+end_src
 #+begin_src go <<Testing>>=
   //<<Test reading a matrix>>
   //<<Test making a matrix symmetrical>>
-  //<<Test deleting a row and a column>>
-  //<<Test appending a row and a column>>
+  //<<Test deleting a taxon>>
+  //<<Test appending a taxon>>
   //<<Test looking up minimum>>
+  //<<Test deleting pair of taxa>>
 #+end_src
 #+begin_src latex
   To test our code for reading a matrix, we open the matrix file, read
@@ -102,14 +103,14 @@
 #+begin_src latex
   We delete the first row and second column.
 #+end_src
-#+begin_src go <<Test deleting a row and a column>>=
+#+begin_src go <<Test deleting a taxon>>=
   dm.Delete(0)
   checkMat(dm, "data/r3.txt", t)
 #+end_src
 #+begin_src latex
   We append a row and a column.
 #+end_src
-#+begin_src go <<Test appending a row and a column>>=
+#+begin_src go <<Test appending a taxon>>=
   data := []float64{0.1, 0.1, 0.1, 0.1}
   dm.Append("new", data)
   checkMat(dm, "data/r4.txt", t)
@@ -122,4 +123,11 @@
   if m != 0.0489 || i != 0 || j != 3 {
 	  t.Errorf("can't find minimum")
   }
+#+end_src
+#+begin_src latex
+  We test deleting a pair of taxa.
+#+end_src
+#+begin_src go <<Test deleting pair of taxa>>=
+  dm.DeletePair(0, 4)
+  checkMat(dm, "data/r5.txt", t)
 #+end_src
