@@ -63,15 +63,15 @@ func (d *DistMat) MakeSymmetrical() {
 
 // The method Delete removes one taxon from DistMat.
 func (d *DistMat) Delete(taxon int) {
-	n := len(d.Names)
 	j := 0
-	for i, n := range d.Names {
+	for i, name := range d.Names {
 		if i != taxon {
-			d.Names[j] = n
+			d.Names[j] = name
 			j++
 		}
 	}
 	d.Names = d.Names[:j]
+	n := len(d.Matrix)
 	ii := 0
 	for i := 0; i < n; i++ {
 		if i == taxon {

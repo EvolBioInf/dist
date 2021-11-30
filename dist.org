@@ -162,11 +162,10 @@
   We delete the taxon from the list of names by reslicing.
 #+end_src
 #+begin_src go <<Delete taxon from names>>=
-  n := len(d.Names)
   j := 0
-  for i, n := range d.Names {
+  for i, name := range d.Names {
 	  if i != taxon {
-		  d.Names[j] = n
+		  d.Names[j] = name
 		  j++
 	  }
   }
@@ -178,6 +177,7 @@
   dimensions.
 #+end_src
 #+begin_src go <<Delete taxon from distances>>=
+  n := len(d.Matrix)
   ii := 0
   for i := 0; i < n; i++ {
 	  if i == taxon { continue }
