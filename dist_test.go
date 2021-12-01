@@ -41,4 +41,8 @@ func TestDist(t *testing.T) {
 	}
 	dm.DeletePair(0, 4)
 	checkMat(dm, "data/r5.txt", t)
+	m, i, j = dm.Max()
+	if m != 0.186 || i != 0 || j != 2 {
+		t.Errorf("can't find maximum")
+	}
 }

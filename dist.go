@@ -159,6 +159,24 @@ func (d *DistMat) Min() (min float64, minI, minJ int) {
 	return min, minI, minJ
 }
 
+// Method Max returns the maximum entry of the distance matrix and its indexes.
+func (d *DistMat) Max() (min float64, maxI, maxJ int) {
+	max := -math.MaxFloat64
+	n := len(d.Names)
+	for i := 0; i < n; i++ {
+		for j := 0; j < n; j++ {
+			if i != j {
+				if max < d.Matrix[i][j] {
+					max = d.Matrix[i][j]
+					maxI = i
+					maxJ = j
+				}
+			}
+		}
+	}
+	return max, maxI, maxJ
+}
+
 // Scan reads input matrix by matrix.
 func (s *Scanner) Scan() bool {
 	var err error

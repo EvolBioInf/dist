@@ -353,6 +353,36 @@
   }
 #+end_src
 #+begin_src latex
+  \subsection{Method \texttt{Max}}
+  !Method \texttt{Max} returns the maximum entry of the distance matrix
+  !and its indexes.
+  At each off-diagonal entry we search for the maximum.
+#+end_src
+#+begin_src go <<Methods>>=
+  func (d *DistMat) Max() (min float64, maxI, maxJ int) {
+	  max := -math.MaxFloat64
+	  n := len(d.Names)
+	  for i := 0; i < n; i++ {
+		  for j := 0; j < n; j++ {
+			  if i != j {
+				  //<<Search for maximum>>
+			  }
+		  }
+	  }
+	  return max, maxI, maxJ
+  }
+#+end_src
+#+begin_src latex
+  We search for the maximum.
+#+end_src
+#+begin_src go <<Search for maximum>>=
+  if max < d.Matrix[i][j] {
+	  max = d.Matrix[i][j]
+	  maxI = i
+	  maxJ = j
+  }
+#+end_src
+#+begin_src latex
   \section{Structure \texttt{Scanner}}
   !A \texttt{DistMat} is read using a \texttt{Scanner}.
   It is modeled on \texttt{bufio.Scanner}, but can handle lines of any

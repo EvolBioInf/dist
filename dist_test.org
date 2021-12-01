@@ -27,6 +27,7 @@
   //<<Test appending a taxon>>
   //<<Test looking up minimum>>
   //<<Test deleting pair of taxa>>
+  //<<Test looking up maximum>>
 #+end_src
 #+begin_src latex
   To test our code for reading a matrix, we open the matrix file, read
@@ -130,4 +131,13 @@
 #+begin_src go <<Test deleting pair of taxa>>=
   dm.DeletePair(0, 4)
   checkMat(dm, "data/r5.txt", t)
+#+end_src
+#+begin_src latex
+  We test looking up the maximum.
+#+end_src
+#+begin_src go <<Test looking up maximum>>=
+  m, i, j = dm.Max()
+  if m != 0.186 || i != 0 || j != 2 {
+	  t.Errorf("can't find maximum")
+  }
 #+end_src
